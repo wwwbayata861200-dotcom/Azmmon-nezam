@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>آزمون قانون نظام مهندسی معدن</title>
+<style>
+  #master-lock-screen { position: fixed; inset: 0; background: #0f172a; color: #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, Tahoma, sans-serif; z-index: 9999; padding: 20px; }
+  #master-lock-screen h2 { color: #38bdf8; margin-bottom: 20px; font-size: 22px; }
+  #master-pass-input { width: 100%; max-width: 300px; padding: 15px; border-radius: 10px; border: 2px solid #334155; background: #1e293b; color: #fff; font-size: 18px; text-align: center; outline: none; margin-bottom: 15px; }
+  #master-pass-btn { width: 100%; max-width: 300px; padding: 15px; border-radius: 10px; background: #22c55e; color: #fff; font-size: 16px; font-weight: bold; border: none; cursor: pointer; }
+  #master-error { color: #ef4444; margin-top: 15px; font-weight: bold; }
+  #main-app-container { display: none; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 12px; }
+  .app { max-width: 680px; margin: 0 auto; }
+  .screen { background: #1e293b; border-radius: 16px; padding: 26px 20px; box-shadow: 0 10px 30px rgba(0,0,0,.3); margin-top: 20px; }
+  .icon { text-align: center; font-size: 40px; margin-bottom: 8px; }
+  h1 { font-size: 18px; color: #38bdf8; text-align: center; margin: 0 0 8px; }
+  .sub { font-size: 13.5px; color: #94a3b8; text-align: center; margin: 0 0 22px; line-height: 1.8; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 13px; text-align: right; }
+  .field label { font-size: 12.5px; color: #cbd5e1; font-weight: 600; }
+  .field input { width: 100%; background: #0f172a; border: 2px solid #334155; border-radius: 10px; color: #e2e8f0; padding: 11px 13px; font-family: inherit; font-size: 15px; outline: none; }
+  .field input:focus { border-color: #38bdf8; }
+  .field input.error { border-color: #ef4444; }
+  .field .err { color: #f87171; font-size: 11.5px; min-height: 14px; }
+  .password-input { width: 100%; background: #0f172a; border: 2px solid #334155; border-radius: 12px; color: #e2e8f0; padding: 14px 16px; font-family: inherit; font-size: 17px; text-align: center; letter-spacing: 2px; outline: none; }
+  .password-input:focus { border-color: #38bdf8; }
+  .password-input.shake { animation: shake .4s ease; border-color: #ef4444; }
+  .error-msg { margin-top: 12px; color: #f87171; font-size: 13.5px; min-height: 20px; font-weight: 600; text-align: center; }
+  .btn-primary { width: 100%; background: linear-gradient(90deg,#22c55e,#16a34a); color: #fff; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15.5px; font-weight: bold; cursor: pointer; margin-top: 6px; }
+  .btn-primary:active { transform: scale(.98); }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
+  .badge { background: #1e293b; padding: 5px 11px; border-radius: 20px; font-size: 12.5px; color: #cbd5e1; }
+  .badge.timer-warn { background: #7f1d1d; color: #fee2e2; }
+  .badge.review { background: #7c2d12; color: #fed7aa; }
+  .progress { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg,#22c55e,#16a34a); transition: width .4s ease; }
+  .card { background: #1e293b; border-radius: 16px; padding: 20px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .qnum { font-size: 12.5px; color: #38bdf8; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .qtext { font-size: 16px; line-height: 1.8; margin-bottom: 18px; font-weight: 600; }
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+  .opt { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: right; background: #0f172a; color: #e2e8f0; border: 1.5px solid #334155; border-radius: 12px; padding: 12px 14px; font-family: inherit; font-size: 15px; line-height: 1.65; cursor: pointer; transition: all .2s ease; }
+  .opt .letter { font-weight: bold; color: #38bdf8; flex-shrink: 0; }
+  .opt:active { transform: scale(.98); }
+  .opt:disabled { cursor: default; }
+  .opt.correct { background: #14532d; border-color: #22c55e; color: #dcfce7; animation: pulse .35s ease; }
+  .opt.correct .letter { color: #86efac; }
+  .opt.wrong { background: #7f1d1d; border-color: #ef4444; color: #fee2e2; animation: shake .35s ease; }
+  .opt.wrong .letter { color: #fca5a5; }
+  .opt.dim { opacity: .45; }
+  @keyframes pulse { 50% { transform: scale(1.02); } }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .feedback { margin-top: 14px; font-size: 14px; min-height: 22px; text-align: center; font-weight: 600; }
+  .feedback.good { color: #4ade80; }
+  .feedback.bad { color: #f87171; }
+  .summary { padding: 8px 2px; }
+  .summary h2 { color: #4ade80; margin: 0 0 14px; text-align: center; font-size: 18px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat { background: #0f172a; border-radius: 10px; padding: 11px 8px; text-align: center; font-size: 12.5px; color: #94a3b8; }
+  .stat strong { display: block; font-size: 20px; margin-top: 3px; color: #e2e8f0; }
+  .stat.good strong { color: #4ade80; }
+  .stat.bad strong { color: #f87171; }
+  .stat.info strong { color: #38bdf8; }
+  .send-status { padding: 12px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13.5px; font-weight: 600; text-align: center; line-height: 1.7; }
+  .send-status.sending { background: #1e3a5f; color: #93c5fd; }
+  .send-status.success { background: #14532d; color: #bbf7d0; }
+  .send-status.error { background: #7f1d1d; color: #fecaca; }
+  .send-status.skipped { background: #334155; color: #cbd5e1; }
+  .wrong-list-title { color: #fca5a5; font-weight: bold; margin: 16px 0 10px; font-size: 15px; text-align: center; }
+  .no-wrong { text-align: center; color: #4ade80; background: #14532d; padding: 14px; border-radius: 10px; font-size: 14px; }
+  .wrong-item { background: #0f172a; border-right: 4px solid #ef4444; border-radius: 10px; padding: 12px 14px; margin-bottom: 9px; font-size: 13.5px; line-height: 1.8; }
+  .wrong-item .wq { color: #e2e8f0; margin-bottom: 8px; font-weight: 600; }
+  .wrong-item .wq .wnum { color: #38bdf8; margin-left: 4px; }
+  .wrong-item .meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+  .tag { padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+  .tag.err { background: #7f1d1d; color: #fecaca; }
+  .tag.ans { background: #14532d; color: #bbf7d0; }
+  .tag.high { background: #7c2d12; color: #fed7aa; }
+  .tag.extreme { background: #991b1b; color: #fff; }
+  .actions { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+  .btn { display: block; width: 100%; background: #2563eb; color: #fff; border: none; padding: 13px; border-radius: 12px; font-family: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; }
+  .btn:active { transform: scale(.97); }
+  .btn.send { background: #22c55e; }
+  .btn.copy { background: #0ea5e9; }
+  .btn.review { background: #f59e0b; color: #0f172a; }
+  .btn.restart { background: #334155; color: #e2e8f0; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: #22c55e; color: #fff; padding: 12px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.4); transition: transform .3s ease; z-index: 100; pointer-events: none; text-align: center; max-width: 90vw; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #ef4444; }
+</style>
+</head>
+<body>
+
+<div id="master-lock-screen">
+  <h2>🔒 ورود به سامانه آزمون</h2>
+  <p style="color:#94a3b8; margin-bottom: 20px; font-size: 14px;">لطفاً رمز سراسری را وارد کنید</p>
+  <input type="password" id="master-pass-input" placeholder="رمز سراسری..." autocomplete="off">
+  <button id="master-pass-btn">ورود به سامانه</button>
+  <div id="master-error"></div>
+</div>
+
+<div id="main-app-container">
+  <div class="app">
+    <div id="stage"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  const MASTER_PASSWORD = "BOSS-1405"; 
+  document.getElementById('master-pass-btn').onclick = function() {
+    const input = document.getElementById('master-pass-input').value;
+    if (input === MASTER_PASSWORD) {
+      document.getElementById('master-lock-screen').style.display = 'none';
+      document.getElementById('main-app-container').style.display = 'block';
+      if (typeof showPasswordScreen === "function") showPasswordScreen();
+    } else {
+      document.getElementById('master-error').textContent = "❌ رمز سراسری اشتباه است!";
+      document.getElementById('master-pass-input').value = "";
+    }
+  };
+  document.getElementById('master-pass-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('master-pass-btn').click();
+  });
+
+  const PASSWORD_LIST = ["ALI-1405-WEPBY", "ALI-1405-9P7XZ", "ALI-1405-3PM66", "ALI-1405-T6R47", "ALI-1405-QY9SD", "ALI-1405-T25YE", "ALI-1405-52E4M", "ALI-1405-85D98", "ALI-1405-J3EEY", "ALI-1405-4862K", "ALI-1405-5X469", "ALI-1405-49X4X", "ALI-1405-L5CR2", "ALI-1405-KBHF2", "ALI-1405-35K23", "ALI-1405-DWPBL", "ALI-1405-D7UGV", "ALI-1405-D7XBT", "ALI-1405-FTWQG", "ALI-1405-HFC68"];
+  const STORAGE_KEY_PW = 'testExamUsedPasswords_v1';
+  const STORAGE_KEY_STUDENT = 'testExamStudentInfo_v1';
+  const TIMER_SECONDS = 30;
+  const LETTERS = ['A','B','C','D'];
+
+  const TELEGRAM_CONFIG = {
+    relayUrl: "https://azmoonnezam.www-bayata861200.workers.dev",
+    botToken: "8270392216:AAEYPDBgkf3_cP9iDpIAfJyptFU1CJYMda4",
+    chatId: "167678651"
+  };
+
+  const questions = [
+    { q: "فعالیت‌های معدنی شامل کدام عملیات است؟", o: ["پی‌جویی و اکتشاف","متالورژی استخراجی","همه موارد","استخراج و کانه‌آرایی"], a: 2 },
+    { q: "ماهیت سازمان‌های نظام مهندسی معدن چیست؟", o: ["غیرانتفاعی","انتفاعی","دولتی","تجاری"], a: 0 },
+    { q: "برای تشکیل سازمان استان، وجود حداقل چند نفر داوطلب عضویت ضروری است؟", o: ["۱۵ نفر","۵۰ نفر","۲۰ نفر","۱۰ نفر"], a: 2 },
+    { q: "اعضای هیأت مدیره سازمان استان برای چه دوره‌ای انتخاب می‌شوند؟", o: ["چهار ساله","سه ساله","پنج ساله","دو ساله"], a: 1 },
+    { q: "شورای مرکزی نظام مهندسی معدن مرکب از چند نفر است؟", o: ["۱۵ نفر","۹ نفر","۷ نفر","۱۱ نفر"], a: 3 },
+    { q: "ماهیت سازمان‌های نظام مهندسی معدن چیست؟", o: ["غیرانتفاعی","انتفاعی","دولتی","تجاری"], a: 0 },
+    { q: "صلاحیت حرفه‌ای برای حرفه‌های مهندسی معدن توسط چه نهادی احراز می‌شود؟", o: ["سازمان محیط زیست","وزارت کار","وزارت صنایع و معادن","وزارت علوم"], a: 2 },
+    { q: "پروانه مهارت فنی و حرفه‌ای برای کارگران ماهر توسط کدام نهاد صادر می‌شود؟", o: ["وزارت کار و امور اجتماعی","شورای انتظامی","سازمان نظام مهندسی معدن","وزارت صنایع و معادن"], a: 0 },
+    { q: "اشخاص حقیقی و حقوقی غیرایرانی جهت انجام خدمات معدنی به چه چیزی نیاز دارند؟", o: ["پروانه کار معتبر از وزارت کار","مدارک صلاحیت حرفه‌ای موقت","تابعیت ایرانی","الف و ب"], a: 3 },
+    { q: "کدام یک از ارکان سازمان نظام مهندسی معدن نیست؟", o: ["هیأت عمومی سازمان","مجمع عمومی","شورای انتظامی نظام مهندسی","شورای مرکزی سازمان"], a: 0 }
+  ];
+
+  let queue = [], mastered = new Set(), wrongCount = {}, mistakes = 0;
+  let current = null, answered = false, timerId = null, timeLeft = 0;
+  let isReviewMode = false, reviewTotal = 0;
+  let student = { firstName: '', lastName: '', nationalId: '', phone: '' };
+  let examStartTime = null, sendAttempted = false;
+
+  const stage = document.getElementById('stage');
+  const toastEl = document.getElementById('toast');
+  const faNum = n => String(n).replace(/\d/g, x => '۰۱۲۳۴۵۶۷۸۹'[+x]);
+  const shuffleArr = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  function normalizePassword(pw) {
+    if (!pw) return '';
+    const persian = '۰۱۲۳۴۵۶۷۸۹', arabic = '٠١٢٣٤٥٦٧٨٩';
+    let r = '';
+    for (const ch of pw) {
+      const pi = persian.indexOf(ch), ai = arabic.indexOf(ch);
+      if (pi >= 0) r += pi; else if (ai >= 0) r += ai; else r += ch;
+    }
+    return r.trim().toUpperCase().replace(/\s+/g, '');
+  }
+
+  function getUsedPasswords() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY_PW) || '[]'); } catch (e) { return []; }
+  }
+  function markPasswordUsed(pw) {
+    const used = getUsedPasswords();
+    if (!used.includes(pw)) { used.push(pw); try { localStorage.setItem(STORAGE_KEY_PW, JSON.stringify(used)); } catch (e) {} }
+  }
+  function validatePassword(pw) {
+    const clean = normalizePassword(pw);
+    if (!clean) return { ok: false, reason: 'رمز را وارد کنید' };
+    if (clean === 'ADMIN-MASTER') return { ok: true, isAdmin: true };
+    const match = PASSWORD_LIST.find(p => normalizePassword(p) === clean);
+    if (!match) return { ok: false, reason: 'رمز نامعتبر است' };
+    if (getUsedPasswords().includes(match)) return { ok: false, reason: 'این رمز قبلاً استفاده شده' };
+    return { ok: true, matched: match };
+  }
+
+  function showToast(msg, isError) {
+    toastEl.textContent = msg;
+    toastEl.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => { toastEl.className = 'toast'; }, 2500);
+  }
+
+  function registerWrong(idx) { wrongCount[idx] = (wrongCount[idx] || 0) + 1; mistakes++; }
+
+  function validateIranianNationalId(id) {
+    if (!/^\d{10}$/.test(id)) return false;
+    if (/^(\d)\1{9}$/.test(id)) return false;
+    const check = +id[9];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += +id[i] * (10 - i);
+    const rem = sum % 11;
+    return (rem < 2 && check === rem) || (rem >= 2 && check === 11 - rem);
+  }
+  function validatePhone(p) { return /^09\d{9}$/.test(p); }
+
+  function showPasswordScreen(errorMsg) {
+    clearTimer();
+    stage.innerHTML = `
+      <div class="screen">
+        <div class="icon">🔒</div>
+        <h1>آزمون تست</h1>
+        <p class="sub">رمز اختصاصی خود را وارد کنید</p>
+        <input type="password" id="password-input" class="password-input" placeholder="رمز عبور" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <div class="error-msg" id="error-msg">${errorMsg || ''}</div>
+        <button class="btn-primary" id="btn-start">ورود به آزمون</button>
+      </div>`;
+    const input = document.getElementById('password-input');
+    const errEl = document.getElementById('error-msg');
+    const attempt = () => {
+      const result = validatePassword(input.value);
+      if (!result.ok) {
+        errEl.textContent = result.reason;
+        input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+        if (navigator.vibrate) navigator.vibrate(80);
+        return;
+      }
+      if (!result.isAdmin) markPasswordUsed(result.matched);
+      showStudentForm();
+    };
+    document.getElementById('btn-start').onclick = attempt;
+    input.onkeydown = e => { if (e.key === 'Enter') attempt(); };
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function showStudentForm() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENT) || '{}'); } catch(e) {}
+    stage.innerHTML = `
+      <div class="screen">
+        <div class="icon">👤</div>
+        <h1>مشخصات خود را وارد کنید</h1>
+        <p class="sub">این اطلاعات همراه گزارش ارسال می‌شود</p>
+        <div class="field"><label>نام</label><input id="first-name" type="text" placeholder="علی" value="${saved.firstName || ''}" /><div class="err" id="err-first"></div></div>
+        <div class="field"><label>نام خانوادگی</label><input id="last-name" type="text" placeholder="محمدی" value="${saved.lastName || ''}" /><div class="err" id="err-last"></div></div>
+        <div class="field"><label>کد ملی (۱۰ رقم)</label><input id="national-id" type="tel" inputmode="numeric" maxlength="10" placeholder="۱۲۳۴۵۶۷۸۹۰" value="${saved.nationalId || ''}" /><div class="err" id="err-nid"></div></div>
+        <div class="field"><label>شماره تماس (۱۱ رقم)</label><input id="phone" type="tel" inputmode="numeric" maxlength="11" placeholder="۰۹۱۲۳۴۵۶۷۸۹" value="${saved.phone || ''}" /><div class="err" id="err-phone"></div></div>
+        <button class="btn-primary" id="btn-info">شروع آزمون</button>
+      </div>`;
+    const fnEl = document.getElementById('first-name');
+    const lnEl = document.getElementById('last-name');
+    const nidEl = document.getElementById('national-id');
+    const phEl = document.getElementById('phone');
+    [nidEl, phEl].forEach(el => {
+      el.addEventListener('input', () => {
+        el.value = el.value.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d]/g, '');
+      });
+    });
+    document.getElementById('btn-info').onclick = () => {
+      const fn = fnEl.value.trim(), ln = lnEl.value.trim();
+      const nid = nidEl.value.trim(), ph = phEl.value.trim();
+      let ok = true;
+      ['err-first','err-last','err-nid','err-phone'].forEach(id => document.getElementById(id).textContent = '');
+      [fnEl, lnEl, nidEl, phEl].forEach(el => el.classList.remove('error'));
+      if (!fn) { document.getElementById('err-first').textContent = 'نام را وارد کنید'; fnEl.classList.add('error'); ok = false; }
+      if (!ln) { document.getElementById('err-last').textContent = 'نام خانوادگی را وارد کنید'; lnEl.classList.add('error'); ok = false; }
+      if (!validateIranianNationalId(nid)) { document.getElementById('err-nid').textContent = 'کد ملی نامعتبر'; nidEl.classList.add('error'); ok = false; }
+      if (!validatePhone(ph)) { document.getElementById('err-phone').textContent = 'شماره باید با ۰۹ و ۱۱ رقم'; phEl.classList.add('error'); ok = false; }
+      if (!ok) { if (navigator.vibrate) navigator.vibrate(80); return; }
+      student = { firstName: fn, lastName: ln, nationalId: nid, phone: ph };
+      try { localStorage.setItem(STORAGE_KEY_STUDENT, JSON.stringify(student)); } catch(e) {}
+      startExam();
+    };
+  }
+
+  function startExam() {
+    queue = shuffleArr(questions.map((_, i) => i));
+    mastered = new Set(); wrongCount = {}; mistakes = 0;
+    isReviewMode = false; reviewTotal = 0; sendAttempted = false;
+    examStartTime = new Date();
+    next();
+  }
+
+  function startReviewMode() {
+    const w = Object.keys(wrongCount).map(Number);
+    if (!w.length) return;
+    queue = shuffleArr(w);
+    mastered = new Set(); wrongCount = {}; mistakes = 0;
+    isReviewMode = true; reviewTotal = w.length; sendAttempted = false;
+    examStartTime = new Date();
+    next();
+  }
+
+  function next() {
+    clearTimer();
+    if (!queue.length) { showSummary(); return; }
+    current = queue.shift();
+    render();
+  }
+
+  function render() {
+    answered = false;
+    const q = questions[current];
+    const total = isReviewMode ? reviewTotal : questions.length;
+    stage.innerHTML = `
+      <div class="topbar">
+        ${isReviewMode ? `<span class="badge review">🔁 مرور</span>` : ''}
+        <span class="badge" id="mastery">تسلط: ${faNum(mastered.size)} از ${faNum(total)}</span>
+        <span class="badge" id="mistakes">خطا: ${faNum(mistakes)}</span>
+        <span class="badge" id="timer">⏱ ${faNum(TIMER_SECONDS)}</span>
+      </div>
+      <div class="progress"><div id="bar" style="width:${mastered.size / total * 100}%"></div></div>
+      <div class="card">
+        <div class="qnum"><span>سؤال</span><span>در صف: ${faNum(queue.length + 1)}</span></div>
+        <div class="qtext">${q.q}</div>
+        <div class="opts" id="opts"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>`;
+    const opts = document.getElementById('opts');
+    q.o.forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.innerHTML = `<span class="letter">${LETTERS[i]}.</span><span>${text}</span>`;
+      btn.onclick = () => pick(i, btn);
+      opts.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer() {
+    timeLeft = TIMER_SECONDS;
+    const el = document.getElementById('timer');
+    timerId = setInterval(() => {
+      timeLeft--;
+      if (el) {
+        el.textContent = `⏱ ${faNum(Math.max(timeLeft, 0))}`;
+        if (timeLeft <= 10) el.classList.add('timer-warn');
+      }
+      if (timeLeft <= 0) { clearTimer(); timeUp(); }
+    }, 1000);
+  }
+  function clearTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+  function timeUp() {
+    if (answered) return;
+    answered = true;
+    const q = questions[current];
+    const all = [...document.querySelectorAll('.opt')];
+    all.forEach(b => b.disabled = true);
+    all[q.a].classList.add('correct');
+    const fb = document.getElementById('feedback');
+    fb.textContent = '⏱ زمان تمام شد! دوباره تکرار می‌شود.';
+    fb.className = 'feedback bad';
+    registerWrong(current);
+    updateTopStats();
+    if (navigator.vibrate) navigator.vibrate(120);
+    requeue();
+    setTimeout(next, 1700);
+  }
+
+  function pick(choice, btn) {
+    if (answered) return;
+    answered = true;
+    clearTimer();
+    const q = questions[current];
+    const all = [...document.querySelectorAll('.opt')];
+    all.forEach(b => b.disabled = true);
+    const fb = document.getElementById('feedback');
+    if (choice === q.a) {
+      btn.classList.add('correct');
+      fb.textContent = '✔ درست!';
+      fb.className = 'feedback good';
+      mastered.add(current);
+      updateTopStats();
+      setTimeout(next, 850);
+    } else {
+      btn.classList.add('wrong');
+      all[q.a].classList.add('correct');
+      all.forEach((b, i) => { if (i !== choice && i !== q.a) b.classList.add('dim'); });
+      fb.textContent = '✘ اشتباه! دوباره تکرار می‌شود.';
+      fb.className = 'feedback bad';
+      registerWrong(current);
+      updateTopStats();
+      if (navigator.vibrate) navigator.vibrate(80);
+      requeue();
+      setTimeout(next, 1700);
+    }
+  }
+
+  function requeue() {
+    if (!queue.includes(current)) {
+      const pos = Math.min(3, queue.length);
+      queue.splice(pos, 0, current);
+    }
+  }
+
+  function updateTopStats() {
+    const total = isReviewMode ? reviewTotal : questions.length;
+    const m = document.getElementById('mastery');
+    const e = document.getElementById('mistakes');
+    const bar = document.getElementById('bar');
+    if (m) m.textContent = `تسلط: ${faNum(mastered.size)} از ${faNum(total)}`;
+    if (e) e.textContent = `خطا: ${faNum(mistakes)}`;
+    if (bar) bar.style.width = (mastered.size / total * 100) + '%';
+  }
+
+  function buildReportText() {
+    const total = isReviewMode ? reviewTotal : questions.length;
+    const attempts = mastered.size + mistakes;
+    const accuracy = attempts ? Math.round((mastered.size / attempts) * 100) : 100;
+    const wrongItems = Object.entries(wrongCount).map(([idx, c]) => ({ idx: +idx, count: c })).sort((a, b) => b.count - a.count);
+    const dateStr = new Date().toLocaleString('fa-IR');
+    const startStr = examStartTime ? examStartTime.toLocaleString('fa-IR') : dateStr;
+
+    let t = '';
+    t += `🧪 گزارش تست ۵ سؤالی (بدون فیلترشکن)\n`;
+    t += `━━━━━━━━━━━━━━━\n\n`;
+    t += `👤 نام: ${student.firstName} ${student.lastName}\n`;
+    t += `🆔 کد ملی: ${student.nationalId}\n`;
+    t += `📱 تماس: ${student.phone}\n`;
+    t += `📅 شروع: ${startStr}\n`;
+    t += `📅 پایان: ${dateStr}\n`;
+    if (isReviewMode) t += `🔁 حالت: مرور غلط‌ها\n`;
+    t += `\n━━━━━━━━━━━━━━━\n\n`;
+    t += `📊 آمار:\n`;
+    t += `• تعداد سؤالات: ${total}\n`;
+    t += `• درست: ${mastered.size}\n`;
+    t += `• خطا: ${mistakes}\n`;
+    t += `• دقت: ${accuracy}٪\n`;
+
+    if (wrongItems.length === 0) {
+      t += `\n🎯 هیچ خطایی نداشتید!\n`;
+    } else {
+      t += `\n❌ سؤالات اشتباه (${wrongItems.length}):\n`;
+      wrongItems.forEach((item, i) => {
+        const q = questions[item.idx];
+        t += `\n${i + 1}. ${q.q}\n   ✘ ${item.count} بار غلط\n   ✔ پاسخ: ${LETTERS[q.a]} - ${q.o[q.a]}\n`;
+      });
+    }
+    t += `\n━━━━━━━━━━━━━━━\nآزمون تست`;
+    return t;
+  }
+
+  async function sendToTelegram(text) {
+    const url = `${TELEGRAM_CONFIG.relayUrl}/bot${TELEGRAM_CONFIG.botToken}/sendMessage`;
+    const MAX = 4000;
+    const chunks = [];
+    let remain = text;
+    while (remain.length > 0) {
+      if (remain.length <= MAX) { chunks.push(remain); break; }
+      let cut = remain.lastIndexOf('\n', MAX);
+      if (cut < MAX * 0.5) cut = MAX;
+      chunks.push(remain.slice(0, cut));
+      remain = remain.slice(cut);
+    }
+    for (const chunk of chunks) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: chunk })
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error('تلگرام: ' + err);
+      }
+      if (chunks.length > 1) await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  async function sendReport() {
+    const statusEl = document.getElementById('send-status');
+    if (!statusEl) return;
+    statusEl.className = 'send-status sending';
+    statusEl.textContent = '📤 در حال ارسال...';
+    try {
+      await sendToTelegram(buildReportText());
+      statusEl.className = 'send-status success';
+      statusEl.textContent = '✅ گزارش به تلگرام ارسال شد';
+      sendAttempted = true;
+    } catch (err) {
+      statusEl.className = 'send-status error';
+      statusEl.innerHTML = `❌ ارسال ناموفق: ${err.message}`;
+    }
+  }
+
+  async function copyReport() {
+    const text = buildReportText();
+    try {
+      if (navigator.clipboard) await navigator.clipboard.writeText(text);
+      else throw 0;
+      showToast('✓ کپی شد');
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast('✓ کپی شد'); } catch (err) { alert(text); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function showSummary() {
+    clearTimer();
+    const total = isReviewMode ? reviewTotal : questions.length;
+    const attempts = mastered.size + mistakes;
+    const accuracy = attempts ? Math.round((mastered.size / attempts) * 100) : 100;
+
+    let msg, emoji;
+    if (mistakes === 0) { msg = 'عالی! بدون خطا'; emoji = '🏆'; }
+    else if (accuracy >= 90) { msg = 'خیلی خوب بود'; emoji = '🎉'; }
+    else if (accuracy >= 70) { msg = 'قابل قبول است'; emoji = '👍'; }
+    else { msg = 'نیاز به مرور'; emoji = '📚'; }
+
+    const wrongItems = Object.entries(wrongCount).map(([idx, c]) => ({ idx: +idx, count: c })).sort((a, b) => b.count - a.count);
+
+    let wrongHTML = '';
+    if (wrongItems.length === 0) {
+      wrongHTML = `<div class="no-wrong">🎯 هیچ خطایی نداشتید!</div>`;
+    } else {
+      wrongHTML = `<div class="wrong-list-title">📋 اشتباه‌ها (${faNum(wrongItems.length)})</div>
+        ${wrongItems.map((item, i) => {
+          const q = questions[item.idx];
+          const cls = item.count >= 3 ? 'extreme' : (item.count === 2 ? 'high' : 'err');
+          return `<div class="wrong-item">
+            <div class="wq"><span class="wnum">${faNum(i + 1)}.</span> ${q.q}</div>
+            <div class="meta">
+              <span class="tag ${cls}">✘ ${faNum(item.count)} بار غلط</span>
+              <span class="tag ans">✔ ${LETTERS[q.a]} — ${q.o[q.a]}</span>
+            </div>
+          </div>`;
+        }).join('')}`;
+    }
+
+    const repeatBtn = wrongItems.length > 0 ? `<button class="btn review" id="btn-review">🔁 تمرین غلط‌ها</button>` : '';
+
+    stage.innerHTML = `
+      <div class="card summary">
+        <h2>${emoji} ${msg}</h2>
+        <div style="text-align:center;font-size:13px;color:#94a3b8;margin-bottom:12px;">
+          ${student.firstName} ${student.lastName} · ${student.nationalId}
+        </div>
+        <div class="stat-grid">
+          <div class="stat info">کل<strong>${faNum(total)}</strong></div>
+          <div class="stat good">درست<strong>${faNum(mastered.size)}</strong></div>
+          <div class="stat bad">خطا<strong>${faNum(mistakes)}</strong></div>
+          <div class="stat info">دقت<strong>${faNum(accuracy)}٪</strong></div>
+        </div>
+        ${wrongHTML}
+        <div class="send-status skipped" id="send-status">آماده ارسال...</div>
+        <div class="actions">
+          <button class="btn send" id="btn-send">📤 ارسال دوباره</button>
+          <button class="btn copy" id="btn-copy">📋 کپی گزارش</button>
+          ${repeatBtn}
+          <button class="btn restart" id="btn-restart">🔒 شروع دوباره</button>
+        </div>
+      </div>`;
+
+    document.getElementById('btn-send').onclick = sendReport;
+    document.getElementById('btn-copy').onclick = copyReport;
+    document.getElementById('btn-restart').onclick = () => showPasswordScreen();
+    if (wrongItems.length > 0) document.getElementById('btn-review').onclick = startReviewMode;
+
+    if (!sendAttempted) setTimeout(sendReport, 500);
+  }
+</script>
+</body>
+</html>
